@@ -49,6 +49,13 @@ enum AchievementTier {
 enum SkillType {
   PREDICTION
 }
+enum UserRole { USER ADMIN }
+enum MarketStatus { OPEN CLOSED RESOLVED }
+enum TransactionType { DEPOSIT WITHDRAWAL TRADE_BUY TRADE_SELL RANDOM_EVENT ACHIEVEMENT REWARD_PAYOUT }
+enum TradeType { BUY SELL }
+enum RandomEventType { GENIE LAMP DWARF JEKYLL }
+enum AchievementTier { EASY MEDIUM HARD }
+enum SkillType { PREDICTION }
 
 model User {
   id            String @id @default(cuid())
@@ -111,6 +118,7 @@ model Outcome {
   positions Position[]
   trades    Trade[]
   wonResolutions MarketResolution[] @relation("WinningOutcome")
+  wonResolution MarketResolution? @relation("WinningOutcome")
 
   @@unique([marketId, index])
 }

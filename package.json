@@ -14,6 +14,7 @@
     "db:up": "bash ./scripts/db-up.sh",
     "db:down": "bash ./scripts/db-down.sh",
     "setup": "npm run db:up && npm run db:migrate && npm run db:seed"
+    "db:seed": "prisma db seed"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

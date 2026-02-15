@@ -11,6 +11,13 @@ Polymarket-style prediction market using **play GP currency** only (no real mone
 - In-memory rate limiting utility
 - Vitest unit tests
 
+## Features
+- LMSR AMM pricing + buy/sell (sell fee = **0%**)
+- Admin-only market create/close/resolve + audit log
+- Wallet + ledger transactions + positions + trades
+- Random events (2% spawn, 6h cooldown, 15m expiry)
+- Achievement diary and Prediction skill XP/levels (OSRS-style curve)
+
 ## Environment
 Create `.env`:
 
@@ -51,6 +58,35 @@ npm run db:down
 3. Log in as `user@polyscape.local` and buy/sell on a market.
 4. Check wallet and portfolio pages update.
 5. Log in as `admin@polyscape.local` and use admin APIs/pages to close/resolve a market.
+## Local run (2-3 commands)
+```bash
+npm install
+npm run db:migrate
+npm run db:seed
+npm run dev
+```
+
+Local users after seed:
+- `admin@polyscape.local` / `admin123`
+- `user@polyscape.local` / `user123`
+
+## API routes
+User:
+- `GET /api/markets`
+- `GET /api/markets/[slug]`
+- `POST /api/markets/[id]/buy`
+- `POST /api/markets/[id]/sell`
+- `GET /api/me/wallet`
+- `GET /api/me/positions`
+- `GET /api/me/skills`
+- `GET /api/me/achievements`
+- `POST /api/random-event/claim`
+
+Admin:
+- `POST /api/admin/markets`
+- `POST /api/admin/markets/[id]/close`
+- `POST /api/admin/markets/[id]/resolve`
+- `GET /api/admin/audit`
 
 ## Test
 ```bash
