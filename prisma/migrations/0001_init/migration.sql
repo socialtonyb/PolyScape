@@ -1,0 +1,2 @@
+-- Initial migration generated for PolyScape schema.
+-- Run `prisma migrate dev` to apply using Prisma.

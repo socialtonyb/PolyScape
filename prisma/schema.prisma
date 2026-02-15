@@ -1,0 +1,224 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum MarketStatus {
+  OPEN
+  CLOSED
+  RESOLVED
+}
+
+enum TransactionType {
+  DEPOSIT
+  WITHDRAWAL
+  TRADE_BUY
+  TRADE_SELL
+  RANDOM_EVENT
+  ACHIEVEMENT
+  REWARD_PAYOUT
+}
+
+enum TradeType {
+  BUY
+  SELL
+}
+
+enum RandomEventType {
+  GENIE
+  LAMP
+  DWARF
+  JEKYLL
+}
+
+enum AchievementTier {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum SkillType {
+  PREDICTION
+}
+
+model User {
+  id            String @id @default(cuid())
+  email         String @unique
+  name          String?
+  hashedPassword String?
+  role          UserRole @default(USER)
+  createdAt     DateTime @default(now())
+  wallet        Wallet?
+  transactions  Transaction[]
+  trades        Trade[]
+  positions     Position[]
+  randomEvents  RandomEvent[]
+  achievements  UserAchievement[]
+  skills        UserSkill[]
+  stats         UserStats?
+  auditLogs     AdminAuditLog[] @relation("AuditActor")
+  resolvedMarkets MarketResolution[] @relation("ResolvedBy")
+}
+
+model Wallet {
+  id        String @id @default(cuid())
+  userId    String @unique
+  balanceGp BigInt @default(0)
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Transaction {
+  id          String @id @default(cuid())
+  userId      String
+  type        TransactionType
+  amountGp    BigInt
+  meta        Json?
+  createdAt   DateTime @default(now())
+  user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Market {
+  id          String @id @default(cuid())
+  slug        String @unique
+  title       String
+  description String
+  category    String
+  liquidityB  Int
+  status      MarketStatus @default(OPEN)
+  closeTime   DateTime
+  createdAt   DateTime @default(now())
+  outcomes    Outcome[]
+  trades      Trade[]
+  resolution  MarketResolution?
+}
+
+model Outcome {
+  id        String @id @default(cuid())
+  marketId  String
+  index     Int
+  title     String
+  qShares   Int @default(0)
+  market    Market @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  positions Position[]
+  trades    Trade[]
+  wonResolutions MarketResolution[] @relation("WinningOutcome")
+
+  @@unique([marketId, index])
+}
+
+model Position {
+  id         String @id @default(cuid())
+  userId     String
+  outcomeId  String
+  shares     Int @default(0)
+  user       User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  outcome    Outcome @relation(fields: [outcomeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, outcomeId])
+}
+
+model Trade {
+  id         String @id @default(cuid())
+  userId     String
+  marketId   String
+  outcomeId  String
+  type       TradeType
+  shares     Int
+  costGp     BigInt
+  feeGp      BigInt @default(0)
+  createdAt  DateTime @default(now())
+  user       User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  market     Market @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  outcome    Outcome @relation(fields: [outcomeId], references: [id], onDelete: Cascade)
+}
+
+model MarketResolution {
+  id               String @id @default(cuid())
+  marketId          String @unique
+  winningOutcomeId  String
+  resolvedById      String
+  note              String?
+  createdAt         DateTime @default(now())
+  market            Market @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  winningOutcome    Outcome @relation("WinningOutcome", fields: [winningOutcomeId], references: [id])
+  resolvedBy        User @relation("ResolvedBy", fields: [resolvedById], references: [id])
+}
+
+model AdminAuditLog {
+  id         String @id @default(cuid())
+  adminId    String
+  action     String
+  meta       Json?
+  createdAt  DateTime @default(now())
+  admin      User @relation("AuditActor", fields: [adminId], references: [id], onDelete: Cascade)
+}
+
+model RandomEvent {
+  id          String @id @default(cuid())
+  userId      String
+  type        RandomEventType
+  rewardGp    BigInt
+  rewardXp    BigInt
+  spawnedAt   DateTime @default(now())
+  expiresAt   DateTime
+  claimedAt   DateTime?
+  user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Achievement {
+  id          String @id @default(cuid())
+  slug        String @unique
+  title       String
+  description String
+  tier        AchievementTier
+  rewardGp    BigInt
+  rewardXp    BigInt
+  criteria    Json
+  users       UserAchievement[]
+}
+
+model UserAchievement {
+  id            String @id @default(cuid())
+  userId        String
+  achievementId String
+  progress      Json?
+  completedAt   DateTime?
+  user          User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, achievementId])
+}
+
+model UserSkill {
+  id        String @id @default(cuid())
+  userId    String
+  type      SkillType
+  xp        BigInt @default(0)
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type])
+}
+
+model UserStats {
+  id                   String @id @default(cuid())
+  userId                String @unique
+  tradesCount           Int @default(0)
+  marketsTradedCount    Int @default(0)
+  volumeGp              BigInt @default(0)
+  wins                  Int @default(0)
+  losses                Int @default(0)
+  currentStreak         Int @default(0)
+  bestStreak            Int @default(0)
+  randomEventsClaimed   Int @default(0)
+  lastRandomEventAt     DateTime?
+  user                  User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
